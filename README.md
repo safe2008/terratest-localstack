@@ -9,7 +9,7 @@
 docker run --rm -it -p 4566:4566 -p 4510-4559:4510-4559 localstack/localstack
 
 ## Starting LocalStack Pro or Enterprise using Docker
-export LOCALSTACK_API_KEY=61ld2V6lTX
+export LOCALSTACK_API_KEY=xxxxxx
 
 docker run \
   --rm -it \
