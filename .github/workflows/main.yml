@@ -17,8 +17,6 @@ jobs:
       localstack:
         image: localstack/localstack:latest
         ports:
-          - "53:53"
-          - "443:443"
           - "4566:4566"
           - "4571:4571"
         env:
