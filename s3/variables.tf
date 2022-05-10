@@ -4,7 +4,7 @@ variable "bucket_name" {
 }
 
 variable "acl" {
-    description = "acl"
-    type = string
-    default = "private"
+  description = "acl"
+  type        = string
+  default     = "private"
 }

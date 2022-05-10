@@ -5,3 +5,5 @@ terraform.tfstate
 terraform.tfstate.backup
 .talismanrc
 **/.terraform/*
+**/output.tfplan
+**/test_output.log

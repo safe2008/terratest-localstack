@@ -17,10 +17,21 @@ jobs:
       localstack:
         image: localstack/localstack:latest
         ports:
-          - 4566:4566
-          - 4569:4569
+          - "53:53"
+          - "443:443"
+          - "4566:4566"
+          - "4571:4571"
         env:
-          LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
+          DEBUG: 1
+          DATA_DIR: /tmp/localstack/data # Local directory for saving persistent data
+          DEFAULT_REGION: us-east-1
+          LAMBDA_EXECUTOR: local #running lambda from local dir
+          LAMBDA_REMOTE_DOCKER: 0
+          DOCKER_SOCK: unix:///var/run/docker.sock
+          HOST_TMP_FOLDER: /tmp/localstack
+          # LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }} # only required for Pro
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock"
 
     steps:
       - uses: actions/checkout@v3
