@@ -31,9 +31,17 @@ func TestAwsInstance(t *testing.T) {
 	terraform.InitAndApply(t, terraformOptions)
 
 	// Run `terraform output` to get the IP of the instance
-	publicIp := terraform.Output(t, terraformOptions, "ip_addresses")
+	ip_addresses := terraform.Output(t, terraformOptions, "ip_addresses")
+	assert.NotNil(t, ip_addresses)
 
-	assert.NotEmpty(t, publicIp)
+	vpc_id := terraform.Output(t, terraformOptions, "vpc_id")
+	assert.NotNil(t, vpc_id)
+
+	vpc_public_subnets := terraform.Output(t, terraformOptions, "vpc_public_subnets")
+	assert.NotNil(t, vpc_public_subnets)
+
+	webserver_ids := terraform.Output(t, terraformOptions, "webserver_ids")
+	assert.NotNil(t, webserver_ids)
 
 	tf_workspace := ""
 	if fromEnv := os.Getenv("TF_WORKSPACE"); fromEnv != "" {
@@ -43,7 +51,7 @@ func TestAwsInstance(t *testing.T) {
 	tlsConfig := tls.Config{}
 
 	if tf_workspace == "prod" {
-		url := fmt.Sprintf("http://%s", publicIp)
+		url := fmt.Sprintf("http://%s", ip_addresses)
 		http_helper.HttpGetWithRetryWithCustomValidation(
 			t,
 			fmt.Sprintf(url),
