@@ -33,6 +33,8 @@ jobs:
       - name: Terraform workspace
         run: |
           (terraform workspace select prod || terraform workspace new prod )
+          export TF_WORKSPACE=prod
+          echo $TF_WORKSPACE
 
       - name: Run the tests
         env:

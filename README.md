@@ -37,9 +37,9 @@ cd tests
 ## Test all
 go test -v -timeout 30m | tee test_output.log
 
-## Test with name
-go test -v -run TestAwsInstance -timeout 30m    
-go test -v -run TestAwsS3 -timeout 30m    
+## Test without workspace
+go test -v -run TestAwsS3 -timeout 30m
+go test -v -run TestAwsInstance -timeout 30m 
 
 ```
 ## Terraform
