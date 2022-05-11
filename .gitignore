@@ -7,3 +7,7 @@ terraform.tfstate.backup
 **/.terraform/*
 **/output.tfplan
 **/test_output.log
+*.pem
+.terraform
+.volume
+terraform.tfstate.d

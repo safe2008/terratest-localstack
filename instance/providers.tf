@@ -1,38 +1,70 @@
-# provider "aws" {
-#   region = var.region
-# }
+locals {
+  use_localstack = (terraform.workspace == "dev")
 
-## Localstack
+  aws_settings = (
+    local.use_localstack ?
+    {
+      region                      = local.region
+      access_key                  = "fake"
+      secret_key                  = "fake"
+      s3_force_path_style         = true
+      skip_credentials_validation = true
+      skip_metadata_api_check     = true
+      skip_requesting_account_id  = true
+
+      skip_credentials_validation = true
+      skip_metadata_api_check     = true
+      skip_requesting_account_id  = true
+
+      override_endpoint = "http://localstack:4566"
+    } :
+    {
+      region     = local.region
+      access_key = null
+      secret_key = null
+
+      skip_credentials_validation = null
+      skip_metadata_api_check     = null
+      skip_requesting_account_id  = null
+
+      override_endpoint = null
+    }
+  )
+}
+
 provider "aws" {
-  region                      = var.region
-  access_key                  = "mock_access_key"
-  secret_key                  = "mock_secret_key"
-  s3_force_path_style         = true
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-  skip_requesting_account_id  = true
+  region     = local.aws_settings.region
+  access_key = local.aws_settings.access_key
+  secret_key = local.aws_settings.secret_key
 
-  endpoints {
-    apigateway       = "http://localstack:4566"
-    cloudformation   = "http://localstack:4566"
-    cloudwatch       = "http://localstack:4566"
-    cloudwatchevents = "http://localstack:4566"
-    dynamodb         = "http://localstack:4566"
-    ec2              = "http://localstack:4566"
-    es               = "http://localstack:4566"
-    firehose         = "http://localstack:4566"
-    iam              = "http://localstack:4566"
-    kinesis          = "http://localstack:4566"
-    lambda           = "http://localstack:4566"
-    route53          = "http://localstack:4566"
-    redshift         = "http://localstack:4566"
-    s3               = "http://localstack:4566"
-    secretsmanager   = "http://localstack:4566"
-    ses              = "http://localstack:4566"
-    sns              = "http://localstack:4566"
-    sqs              = "http://localstack:4566"
-    ssm              = "http://localstack:4566"
-    stepfunctions    = "http://localstack:4566"
-    sts              = "http://localstack:4566"
+  skip_credentials_validation = local.aws_settings.skip_credentials_validation
+  skip_metadata_api_check     = local.aws_settings.skip_metadata_api_check
+  skip_requesting_account_id  = local.aws_settings.skip_requesting_account_id
+
+  dynamic "endpoints" {
+    for_each = local.aws_settings.override_endpoint[*]
+    content {
+      apigateway       = endpoints.value
+      cloudformation   = endpoints.value
+      cloudwatch       = endpoints.value
+      cloudwatchevents = endpoints.value
+      dynamodb         = endpoints.value
+      ec2              = endpoints.value
+      es               = endpoints.value
+      firehose         = endpoints.value
+      iam              = endpoints.value
+      kinesis          = endpoints.value
+      lambda           = endpoints.value
+      route53          = endpoints.value
+      redshift         = endpoints.value
+      s3               = endpoints.value
+      secretsmanager   = endpoints.value
+      ses              = endpoints.value
+      sns              = endpoints.value
+      sqs              = endpoints.value
+      ssm              = endpoints.value
+      stepfunctions    = endpoints.value
+      sts              = endpoints.value
+    }
   }
 }

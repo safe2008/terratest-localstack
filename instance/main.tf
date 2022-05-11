@@ -9,28 +9,59 @@ terraform {
   required_version = ">= 0.13.4"
 }
 
-# Deploy an EC2 Instance.
-resource "aws_instance" "example" {
-  # Run an Ubuntu 18.04 AMI on the EC2 instance.
-  ami                    = "ami-830c94e3"
-  instance_type          = "t2.micro"
-  vpc_security_group_ids = [aws_security_group.instance.id]
-  tags                   = local.tags
+resource "aws_instance" "webserver" {
+  instance_type = var.instance_type
+  # ami                    = lookup(var.aws_amis, var.aws_region)
+  ami = var.aws_amis[var.aws_region]
+  # ami                    = var.aws_ami
+  count                  = var.instance_count
+  key_name               = var.key_name
+  vpc_security_group_ids = ["${aws_security_group.allow_ports.id}"]
+  subnet_id              = element(module.vpc.public_subnets, count.index)
+  user_data              = file("scripts/init.sh")
 
-  # When the instance boots, start a web server on port 8080 that responds with "Hello, World!".
-  user_data = <<EOF
-    #!/bin/bash
-    echo "Hello, World!" > index.html
-    nohup busybox httpd -f -p 8080 &
-    EOF
+  tags = local.tags
 }
 
-# Allow the instance to receive requests on port 8080.
-resource "aws_security_group" "instance" {
+resource "aws_security_group" "allow_ports" {
+  name        = "allow_ssh_http"
+  description = "Allow inbound SSH traffic and http from any IP"
+  vpc_id      = module.vpc.vpc_id
+
+  #ssh access
   ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
+    from_port = 22
+    to_port   = 22
+    protocol  = "tcp"
+    # Restrict ingress to necessary IPs/ports.
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  # HTTP access
+  ingress {
+    from_port = 80
+    to_port   = 80
+    protocol  = "tcp"
+    # Restrict ingress to necessary IPs/ports.
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = local.tags
 }
+
+# # Allow the instance to receive requests on port 8080.
+# resource "aws_security_group" "instance" {
+#   ingress {
+#     from_port   = 8080
+#     to_port     = 8080
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+# }

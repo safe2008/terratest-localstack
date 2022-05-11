@@ -1,9 +1,13 @@
 package test
 
 import (
+	"fmt"
+	"os"
 	"testing"
+	"time"
+	"crypto/tls"
 
-	"github.com/gruntwork-io/terratest/modules/aws"
+	http_helper "github.com/gruntwork-io/terratest/modules/http-helper"
 	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
 	"github.com/stretchr/testify/assert"
 
@@ -15,17 +19,9 @@ func TestAwsInstance(t *testing.T) {
 
 	workingDir := test_structure.CopyTerraformFolderToTemp(t, "../", "/instance")
 
-	// Pick a random AWS region to test in. This helps ensure your code works in all regions.
-	awsRegion := aws.GetRandomStableRegion(t, nil, nil)
-
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		// The path to where our Terraform code is located
 		TerraformDir: workingDir,
-
-		// Variables to pass to our Terraform code using -var options
-		Vars: map[string]interface{}{
-			"region": awsRegion,
-		},
 	})
 
 	// At the end of the test, run `terraform destroy` to clean up any resources that were created.
@@ -35,11 +31,28 @@ func TestAwsInstance(t *testing.T) {
 	terraform.InitAndApply(t, terraformOptions)
 
 	// Run `terraform output` to get the IP of the instance
-	publicIp := terraform.Output(t, terraformOptions, "public_ip")
+	publicIp := terraform.Output(t, terraformOptions, "ip_addresses")
 
 	assert.NotEmpty(t, publicIp)
 
-	// Make an HTTP request to the instance and make sure we get back a 200 OK with the body "Hello, World!"
-	// url := fmt.Sprintf("http://%s:8080", publicIp)
-	// http_helper.HttpGetWithRetry(t, url, nil, 200, "Hello, World!", 30, 5*time.Second)
+	tf_workspace := ""
+	if fromEnv := os.Getenv("TF_WORKSPACE"); fromEnv != "" {
+		tf_workspace = fromEnv
+	}
+
+	tlsConfig := tls.Config{}
+
+	if tf_workspace == "prod" {
+		url := fmt.Sprintf("http://%s", publicIp)
+		http_helper.HttpGetWithRetryWithCustomValidation(
+			t,
+			fmt.Sprintf(url),
+			&tlsConfig,
+			30,
+			10 * time.Second,
+			func(statusCode int, body string) bool {
+				return statusCode == 200
+			},
+		)
+	}
 }
