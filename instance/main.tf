@@ -10,10 +10,8 @@ terraform {
 }
 
 resource "aws_instance" "webserver" {
-  instance_type = var.instance_type
-  # ami                    = lookup(var.aws_amis, var.aws_region)
-  ami = var.aws_amis[var.aws_region]
-  # ami                    = var.aws_ami
+  instance_type          = var.instance_type
+  ami                    = var.aws_amis[var.aws_region]
   count                  = var.instance_count
   key_name               = var.key_name
   vpc_security_group_ids = ["${aws_security_group.allow_ports.id}"]

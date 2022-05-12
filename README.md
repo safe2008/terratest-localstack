@@ -10,11 +10,12 @@
 
 ```
 ## Docker compose
-
 docker-compose up
 
-## Checking license activation
+----------------------------------------------------------------------
+## Checking localstack service running
 curl localhost:4566/health | jq
+----------------------------------------------------------------------
 
 ## Aws configure
 aws configure --profile mylocalstack                                                        
@@ -30,19 +31,24 @@ export LOCALSTACK_URL=http://localstack:4566
 export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY=test
 export AWS_DEFAULT_REGION=us-east-1
-```
-## Run test
-```
-cd tests
-## Test all
-go test -v -timeout 30m | tee test_output.log
+----------------------------------------------------------------------
 
-## Test without workspace
-go test -v -run TestAwsS3 -timeout 30m
-go test -v -run TestAwsInstance -timeout 30m 
+## S3 test fix provider
+### Remark this is fix to test on LocalStack only
+cd test
+
+## TestAwsS3
+go test -v -run TestAwsS3 -timeout 30m | tee test_output.log
 
 ```
-## Terraform
+## Run test without Terraform workspace to show the error of provider.
+```
+## TestAwsInstance
+go test -v -run TestAwsInstance -timeout 30m | tee test_output.log
+
+```
+## How to test on LocalStack and AWS Cloud.
+## Run test with Terraform workspace
 ```
 ## Dev environment
 terraform workspace list
@@ -51,13 +57,18 @@ terraform workspace select dev
 export TF_WORKSPACE=dev
 echo $TF_WORKSPACE
 
-terraform fmt --recursive
+## TestAwsInstance
+go test -v -run TestAwsInstance -timeout 30m | tee test_output.log
+
+## Option terraform process
 terraform init
 terraform plan -var-file terraform.tfvars -out output.tfplan
 terraform apply "output.tfplan"
 terraform destroy -var-file terraform.tfvars -auto-approve
+----------------------------------------------------------------------
 
 ## Prod environment
+unset TF_WORKSPACE
 export AWS_PROFILE=default
 terraform workspace list
 terraform workspace new prod
@@ -65,20 +76,26 @@ terraform workspace select prod
 export TF_WORKSPACE=prod
 echo $TF_WORKSPACE
 
+## TestAwsInstance
+go test -v -run TestAwsInstance -timeout 30m | tee test_output.log
+
+## Option terraform process
 terraform init
 terraform plan -var-file terraform.tfvars -out output.tfplan
 terraform apply "output.tfplan"
 terraform destroy -var-file terraform.tfvars -auto-approve
-
+----------------------------------------------------------------------
 ```
 ## AWS local run
 ```
+## Full endpoint-url
+aws --endpoint-url=http://localhost:4566 ec2 describe-instances --query 'Reservations[].Instances[].[InstanceId,InstanceType,PublicIpAddress,Tags[?Key==`Name`]| [0].Value]' --output table --region us-east-1
+
+
+## Use alias endpoint-url
 export LOCALSTACK_URL=http://localhost:4566
-alias aws="aws \
-    --endpoint-url $LOCALSTACK_URL"
+alias aws="aws --endpoint-url $LOCALSTACK_URL"
 
 aws ec2 describe-instances --query 'Reservations[].Instances[].[InstanceId,InstanceType,PublicIpAddress,Tags[?Key==`Name`]| [0].Value]' --output table --region us-east-1
-
-aws --endpoint-url=http://localhost:4566 ec2 describe-instances --query 'Reservations[].Instances[].[InstanceId,InstanceType,PublicIpAddress,Tags[?Key==`Name`]| [0].Value]' --output table --region us-east-1
                                               
 ```
