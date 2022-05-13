@@ -36,6 +36,7 @@ export AWS_DEFAULT_REGION=us-east-1
 ## S3 test fix provider
 ### Remark this is fix to test on LocalStack only
 cd test
+go get -u -t -d -v ./... 
 
 ## TestAwsS3
 go test -v -run TestAwsS3 -timeout 30m | tee test_output.log
